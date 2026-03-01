@@ -122,25 +122,6 @@ Googleスプレッドシート上で動作する
 
 ---
 
-## 🏗 Design Principles
-
-- 単一責任分離（main / parser / util / pdf）
-- 元データ非破壊設計
-- 入力揺れに強いパーサー
-- 再利用可能な構造
-- メンテナンスしやすい設計
-
----
-
-## 🚀 Future Improvements
-
-- Googleフォーム連携
-- CSV一括生成
-- 保存先フォルダ指定
-- Webアプリ化
-- 複数テンプレ対応
-
----
 
 ## 📜 License
 
