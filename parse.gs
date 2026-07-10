@@ -31,22 +31,37 @@ function parseInputText_(raw) {
 
 function parseHistoryLine_(line) {
   var s = normalizeZenkaku_(line).trim();
-  var m = s.match(/^(\d{4})\s*[-\/\.]\s*(\d{1,2})\s*(.*)$/);
+  var m = s.match(/^(\d{4})\s*(?:[-\/.]\s*|年\s*)(\d{1,2})(?:\s*月)?\s*(.*)$/);
   if (!m) return null;
 
-  return { year: m[1], month: pad2num_(m[2]), text: m[3].trim() };
+  var month = parseInt(m[2], 10);
+  if (month < 1 || month > 12) {
+    throw new Error('年月の月が不正です: ' + line);
+  }
+
+  return { year: m[1], month: pad2num_(month), text: m[3].trim() };
 }
 
 function parseBirthFlexible_(s) {
   var x = normalizeZenkaku_(String(s || '').trim());
 
   var m1 = x.match(/^(\d{4})\s*[-\/\.]\s*(\d{1,2})\s*[-\/\.]\s*(\d{1,2})$/);
-  if (m1) return { year: m1[1], month: pad2num_(m1[2]), day: pad2num_(m1[3]) };
+  if (m1) return makeBirthDate_(m1[1], m1[2], m1[3], s);
 
   var m2 = x.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
-  if (m2) return { year: m2[1], month: pad2num_(m2[2]), day: pad2num_(m2[3]) };
+  if (m2) return makeBirthDate_(m2[1], m2[2], m2[3], s);
 
-  return { year:'', month:'', day:'' };
+  throw new Error('生年月日の形式が不正です: ' + s);
+}
+
+function makeBirthDate_(year, month, day, source) {
+  var y = parseInt(year, 10);
+  var m = parseInt(month, 10);
+  var d = parseInt(day, 10);
+  if (!isValidDate_(y, m, d)) {
+    throw new Error('生年月日が存在しない日付です: ' + source);
+  }
+  return { year: String(y), month: pad2num_(m), day: pad2num_(d) };
 }
 
 function formatBirthDisplay_(y, m, d, age) {

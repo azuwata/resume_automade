@@ -10,14 +10,27 @@ function onOpen() {
 }
 
 function GenerateAndExportPDF() {
-  History_generate();
+  var file = withDocumentLock_(function() {
+    var sourceSs = SpreadsheetApp.getActiveSpreadsheet();
+    var data = readInputData_(sourceSs);
+    var sourceFile = DriveApp.getFileById(sourceSs.getId());
+    var parents = sourceFile.getParents();
+    var folder = parents.hasNext() ? parents.next() : DriveApp.getRootFolder();
+    var copy = sourceFile.makeCopy('一時_履歴書PDF_' + new Date().getTime(), folder);
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(PDF_SHEET_NAME);
-  var blob = exportSheetToPdf_(ss.getId(), sheet.getSheetId(), makePdfFileName_());
+    try {
+      var copySs = SpreadsheetApp.openById(copy.getId());
+      fillResume_(copySs, data);
 
-  var folder = DriveApp.getFileById(ss.getId()).getParents().next();
-  var file = folder.createFile(blob);
+      var sheet = copySs.getSheetByName(PDF_SHEET_NAME);
+      if (!sheet) throw new Error('PDF出力シートが見つからない: ' + PDF_SHEET_NAME);
+
+      var blob = exportSheetToPdf_(copySs.getId(), sheet.getSheetId(), makePdfFileName_(data.name));
+      return folder.createFile(blob);
+    } finally {
+      copy.setTrashed(true);
+    }
+  });
 
   SpreadsheetApp.getUi().alert('PDFできた\n' + file.getUrl());
 }
@@ -29,9 +42,7 @@ function exportSheetToPdf_(id, gid, name) {
     .getBlob().setName(name + '.pdf');
 }
 
-function makePdfFileName_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var n = ss.getRangeByName('name');
+function makePdfFileName_(name) {
   var ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmm');
-  return PDF_FILE_PREFIX + (n ? n.getValue() : '') + '_' + ts;
+  return PDF_FILE_PREFIX + (name || '') + '_' + ts;
 }

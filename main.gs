@@ -4,14 +4,22 @@ var HISTORY_MAX = 15;
 var LICENSE_MAX = 10;
 
 function History_generate() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  withDocumentLock_(function() {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    fillResume_(ss, readInputData_(ss));
+  });
+}
+
+function readInputData_(ss) {
   var inputSheet = ss.getSheetByName(INPUT_SHEET);
   if (!inputSheet) throw new Error('入力シートが見つからない: ' + INPUT_SHEET);
 
   var raw = String(inputSheet.getRange(INPUT_CELL).getValue() || '').trim();
   if (!raw) throw new Error('入力テキストが空です（入力!A1）');
+  return parseInputText_(raw);
+}
 
-  var data = parseInputText_(raw);
+function fillResume_(ss, data) {
 
   setIfExists_(ss, 'name', data.name);
   setIfExists_(ss, 'kana', data.kana);
